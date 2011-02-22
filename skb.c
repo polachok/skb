@@ -39,7 +39,7 @@ get_gr_names(Display *dpy, XkbDescPtr kb,
     for (i = 0; i < num_groups; i++) {
         if (kb->names->groups[i]) {
             if ((name = XGetAtomName(dpy, kb->names->groups[i]))) {
-                strncpy(groups+strlen(groups)*sizeof(char), name, 3);
+                strncpy(groups+strlen(groups)), name, 3);
 		groups[strlen(groups)]=':';
             }
             else {
@@ -101,7 +101,7 @@ main(int argc, char *argv[]){
             {
                 if(groups[i]==':')
                 {
-                    strncpy(active,groups+k*(sizeof(char)),3);
+                    strncpy(active,groups+k,3);
                     k=i+1;
                     j++;
                     if(j==active_group+1)
