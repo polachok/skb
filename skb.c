@@ -55,13 +55,13 @@ get_gr_names(Display *dpy, XkbDescPtr kb, int ngroups, char **groups) {
     XkbFreeNames(kb, XkbGroupNamesMask, 0);
 }
 
-void
-get_active_gr(Display *dpy, int *active) {
+int
+get_active_gr(Display *dpy) {
     XkbStateRec state;
 
     if (XkbGetState(dpy, XkbUseCoreKbd, &state) != Success)
 	eprint("skb: XkbGetState() failed\n");
-    *active = state.group;        
+    return state.group;        
 }
 
 int
@@ -91,7 +91,7 @@ main(int argc, char *argv[]){
 
     XkbSelectEvents(dpy, XkbUseCoreKbd, XkbAllEventsMask, XkbAllEventsMask);
     for(;;) {
-        get_active_gr(dpy, &active);
+        active = get_active_gr(dpy);
         if(active != old) {
             puts(groups[active]);
 	    fflush(stdout);
