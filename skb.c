@@ -30,7 +30,7 @@ get_gr_num(Display *dpy, XkbDescPtr kb) {
     int rv;
 
     if (XkbGetControls(dpy, XKB_CTRLS_MASK, kb) != Success)
-	eprint("XkbGetControls() failed.\n");
+	eprint("skb: XkbGetControls() failed.\n");
     rv = kb->ctrls->num_groups;
     XkbFreeControls(kb, XKB_CTRLS_MASK, 0);
     return rv;
@@ -42,14 +42,14 @@ get_gr_names(Display *dpy, XkbDescPtr kb, int num_groups, char **groups) {
     int i;
 
     if (XkbGetNames(dpy, XkbGroupNamesMask, kb) != Success)
-        eprint("XkbGetNames() failed");
+        eprint("skb: XkbGetNames() failed");
   
     for (i = 0; i < num_groups; i++) {
         if (kb->names->groups[i]) {
             if ((name = XGetAtomName(dpy, kb->names->groups[i])))
 		snprintf(groups[i], OUTPUT_LENGTH+1, name);
             else
-		eprint("XGetAtomName() failed\n");
+		eprint("skb: XGetAtomName() failed\n");
         }
     }
     XkbFreeNames(kb, XkbGroupNamesMask, 0);
@@ -60,7 +60,7 @@ get_active_gr(Display *dpy, int *active_group) {
     XkbStateRec state;
 
     if (XkbGetState(dpy, XkbUseCoreKbd, &state) != Success)
-	eprint("XkbGetState() failed\n");
+	eprint("skb: XkbGetState() failed\n");
     *active_group = state.group;        
 }
 
@@ -79,7 +79,7 @@ main(int argc, char *argv[]){
 	eprint("skb: cannot open display\n");
 
     if (!(kb = XkbAllocKeyboard()))
-	eprint("XkbAllocKeyboard()\n");
+	eprint("skb: XkbAllocKeyboard()\n");
 
     num_groups = get_gr_num(dpy, kb);
 
