@@ -35,25 +35,20 @@ get_gr_num(Display *dpy, XkbDescPtr kb) {
 
 static int
 get_gr_names(Display *dpy, XkbDescPtr kb, 
-                                 int num_groups, char *groups) {
+                                 int num_groups, char **groups) {
     int status = 1;
     char *name = NULL;
     int i;
 
-    if (XkbGetNames(dpy, XkbGroupNamesMask, kb) != Success) {
-        fprintf(stderr,"XkbGetNames()");
-        return 1;
-    }
+    if (XkbGetNames(dpy, XkbGroupNamesMask, kb) != Success)
+        eprint("XkbGetNames() failed");
   
     for (i = 0; i < num_groups; i++) {
         if (kb->names->groups[i]) {
-            if ((name = XGetAtomName(dpy, kb->names->groups[i]))) {
-                strncpy(groups+strlen(groups), name, 3);
-		groups[strlen(groups)]=':';
-            }
-            else {
-                fprintf(stderr,"XGetAtomName()");
-            }
+            if ((name = XGetAtomName(dpy, kb->names->groups[i])))
+		snprintf(groups[i], 256, name);
+            else
+		eprint("XGetAtomName() failed\n");
         }
         else {
 	    fprintf(stderr, "Something weird happened");
@@ -84,13 +79,12 @@ main(int argc, char *argv[]){
     XkbDescPtr kb;
     XkbEvent ev;
     int num_groups = 0;
-    char groups[256], active[256];
+    char **groups;
     int active_group = 0;
     int old = -1;
     int i, j, k;
 
     i = j = k = 0;
-    *groups = *active = '\0';
     if(!(dpy = XOpenDisplay(0)))
 	eprint("skb: cannot open display\n");
 
@@ -98,6 +92,9 @@ main(int argc, char *argv[]){
 	eprint("XkbAllocKeyboard()\n");
 
     num_groups = get_gr_num(dpy, kb);
+    groups = malloc(sizeof(char*)*num_groups);
+    for (i = 0; i < num_groups; i++)
+	    groups[i] = malloc(256); 
     
     if (get_gr_names(dpy, kb, num_groups, groups))
         eprint("skb: cannot get groups names\n");
@@ -105,27 +102,10 @@ main(int argc, char *argv[]){
     XkbSelectEvents(dpy, XkbUseCoreKbd, XkbAllEventsMask, XkbAllEventsMask);
     for(;;) {
         if (get_active_gr(dpy, &active_group))
-            printf("skb: cannot get active group\n");
-        if(active_group!=old) {
-            while(i<strlen(groups))
-            {
-                if(groups[i]==':')
-                {
-                    strncpy(active,groups+k,3);
-                    k=i+1;
-                    j++;
-                    if(j==active_group+1)
-                      break;
-                    bzero(active, 256);
-                }
-                i++;
-            }
-            if(strlen(active)==0)
-                return 1;
-            active[strlen(active)]='\0';
-            puts(active);
+            eprint("cannot get active group\n");
+        if(active_group != old) {
+            puts(groups[active_group]);
 	    fflush(stdout);
-            i=j=k=0;
             old=active_group;
         }
 	if(argc > 1)
