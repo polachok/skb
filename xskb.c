@@ -34,7 +34,7 @@ void
 run(Display *dpy, char **groups, XColor *colors) {
     int active = 0;
     int old = -1;
-    int th, ty;
+    int th, ty, tw;
     GC gc;
 
     th = font->ascent + font->descent;
@@ -47,7 +47,8 @@ run(Display *dpy, char **groups, XColor *colors) {
 	    XSetForeground(dpy, gc, colors[active].pixel);
 	    XFillRectangle(dpy, win, gc, 0, 0, width, height);
 	    XSetForeground(dpy, gc, BlackPixel(dpy, screen));
-	    XDrawString(dpy, win, gc, width/2 - th, ty, groups[active], strlen(groups[active]));
+	    tw = XTextWidth(font, groups[active], strlen(groups[active]));
+	    XDrawString(dpy, win, gc, width/2 - tw/2, ty, groups[active], strlen(groups[active]));
 	    old = active;
 	}
 	wait_gr_event(dpy);
