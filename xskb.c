@@ -12,6 +12,7 @@
 
 Window win;
 XrmDatabase xrdb;
+XFontStruct *font;
 int screen;
 int width = 30;
 int height = 12;
@@ -33,15 +34,22 @@ void
 run(Display *dpy, char **groups, XColor *colors) {
     int active = 0;
     int old = -1;
+    int th, ty;
     GC gc;
+
+    th = font->ascent + font->descent;
+    ty = (height / 2) - (th / 2) + font->ascent;
     gc = XCreateGC(dpy, DefaultRootWindow(dpy), 0, 0);
+    XSetFont(dpy, gc, font->fid);
     for(;;) {
         active = get_active_gr(dpy);
-        if(active != old) {
+	if(active != old) {
 	    XSetForeground(dpy, gc, colors[active].pixel);
 	    XFillRectangle(dpy, win, gc, 0, 0, width, height);
-            old = active;
-        }
+	    XSetForeground(dpy, gc, BlackPixel(dpy, screen));
+	    XDrawString(dpy, win, gc, width/2 - th, ty, groups[active], strlen(groups[active]));
+	    old = active;
+	}
 	wait_gr_event(dpy);
     };
 }
@@ -69,7 +77,7 @@ main(int argc, char *argv[]){
     Colormap cmap;
     int ngroups = 0;
     char **groups;
-    char *colstr, *xrms, *home;
+    char *colstr, *xrms, *home, *fontstr;
     char resname[20];
     char tmp[256];
     int ch, i;
@@ -113,6 +121,9 @@ main(int argc, char *argv[]){
 	if(!xrdb)
 	    xrdb = XrmGetFileDatabase(tmp);
     }
+    fontstr = getresource("font", "fixed");
+    if(!(font = XLoadQueryFont(dpy, fontstr)))
+	eprint("skb: XLoadQueryFont failed for %s\n", fontstr);
     screen = DefaultScreen(dpy);
     cmap = DefaultColormap(dpy, screen);
     xwa.override_redirect = 1;
