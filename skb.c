@@ -22,7 +22,7 @@ eprint(const char *errstr, ...)
 	exit(EXIT_FAILURE);
 }
 
-static int
+int
 get_gr_num(Display *dpy, XkbDescPtr kb) {
     int rv;
 
@@ -33,10 +33,8 @@ get_gr_num(Display *dpy, XkbDescPtr kb) {
     return rv;
 }
 
-static int
-get_gr_names(Display *dpy, XkbDescPtr kb, 
-                                 int num_groups, char **groups) {
-    int status = 1;
+void
+get_gr_names(Display *dpy, XkbDescPtr kb, int num_groups, char **groups) {
     char *name = NULL;
     int i;
 
@@ -46,31 +44,21 @@ get_gr_names(Display *dpy, XkbDescPtr kb,
     for (i = 0; i < num_groups; i++) {
         if (kb->names->groups[i]) {
             if ((name = XGetAtomName(dpy, kb->names->groups[i])))
-		snprintf(groups[i], 256, name);
+		snprintf(groups[i], 4, name);
             else
 		eprint("XGetAtomName() failed\n");
         }
-        else {
-	    fprintf(stderr, "Something weird happened");
-        }
     }
-    status = 0;
     XkbFreeNames(kb, XkbGroupNamesMask, 0);
-    return status;
 }
 
-static int
+void
 get_active_gr(Display *dpy, int *active_group) {
     XkbStateRec state;
 
-    if (XkbGetState(dpy, XkbUseCoreKbd, &state) == Success) {
-        *active_group = state.group;        
-        return 0;
-    }
-    else {
-        fprintf(stderr,"XkbGetState()");
-        return 1;
-    }
+    if (XkbGetState(dpy, XkbUseCoreKbd, &state) != Success)
+	eprint("XkbGetState() failed\n");
+    *active_group = state.group;        
 }
 
 int
@@ -82,9 +70,8 @@ main(int argc, char *argv[]){
     char **groups;
     int active_group = 0;
     int old = -1;
-    int i, j, k;
+    int i;
 
-    i = j = k = 0;
     if(!(dpy = XOpenDisplay(0)))
 	eprint("skb: cannot open display\n");
 
@@ -92,17 +79,16 @@ main(int argc, char *argv[]){
 	eprint("XkbAllocKeyboard()\n");
 
     num_groups = get_gr_num(dpy, kb);
+
     groups = malloc(sizeof(char*)*num_groups);
     for (i = 0; i < num_groups; i++)
 	    groups[i] = malloc(256); 
     
-    if (get_gr_names(dpy, kb, num_groups, groups))
-        eprint("skb: cannot get groups names\n");
+    get_gr_names(dpy, kb, num_groups, groups);
 
     XkbSelectEvents(dpy, XkbUseCoreKbd, XkbAllEventsMask, XkbAllEventsMask);
     for(;;) {
-        if (get_active_gr(dpy, &active_group))
-            eprint("cannot get active group\n");
+        get_active_gr(dpy, &active_group);
         if(active_group != old) {
             puts(groups[active_group]);
 	    fflush(stdout);
