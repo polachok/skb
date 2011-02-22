@@ -10,14 +10,6 @@
 
 #define XKB_CTRLS_MASK (XkbAllControlsMask & ~(XkbInternalModsMask | XkbIgnoreLockModsMask))
 
-typedef struct Client Client;
-struct Client {
-        int grp;
-        Window win;
-        Client *prev;
-        Client *next;
-};
-
 static int
 get_gr_num(Display *dpy, XkbDescPtr kb,
                                int *num_groups) {
