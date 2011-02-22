@@ -37,14 +37,14 @@ get_gr_num(Display *dpy, XkbDescPtr kb) {
 }
 
 void
-get_gr_names(Display *dpy, XkbDescPtr kb, int num_groups, char **groups) {
+get_gr_names(Display *dpy, XkbDescPtr kb, int ngroups, char **groups) {
     char *name = NULL;
     int i;
 
     if (XkbGetNames(dpy, XkbGroupNamesMask, kb) != Success)
         eprint("skb: XkbGetNames() failed");
   
-    for (i = 0; i < num_groups; i++) {
+    for (i = 0; i < ngroups; i++) {
         if (kb->names->groups[i]) {
             if ((name = XGetAtomName(dpy, kb->names->groups[i])))
 		snprintf(groups[i], OUTPUT_LENGTH+1, name);
@@ -56,12 +56,12 @@ get_gr_names(Display *dpy, XkbDescPtr kb, int num_groups, char **groups) {
 }
 
 void
-get_active_gr(Display *dpy, int *active_group) {
+get_active_gr(Display *dpy, int *active) {
     XkbStateRec state;
 
     if (XkbGetState(dpy, XkbUseCoreKbd, &state) != Success)
 	eprint("skb: XkbGetState() failed\n");
-    *active_group = state.group;        
+    *active = state.group;        
 }
 
 int
@@ -69,9 +69,9 @@ main(int argc, char *argv[]){
     Display *dpy;
     XkbDescPtr kb;
     XkbEvent ev;
-    int num_groups = 0;
+    int ngroups = 0;
     char **groups;
-    int active_group = 0;
+    int active = 0;
     int old = -1;
     int i;
 
@@ -81,21 +81,21 @@ main(int argc, char *argv[]){
     if (!(kb = XkbAllocKeyboard()))
 	eprint("skb: XkbAllocKeyboard()\n");
 
-    num_groups = get_gr_num(dpy, kb);
+    ngroups = get_gr_num(dpy, kb);
 
-    groups = malloc(sizeof(char*)*num_groups);
-    for (i = 0; i < num_groups; i++)
+    groups = malloc(sizeof(char*)*ngroups);
+    for (i = 0; i < ngroups; i++)
 	    groups[i] = malloc(MAXGROUPLENGTH); 
     
-    get_gr_names(dpy, kb, num_groups, groups);
+    get_gr_names(dpy, kb, ngroups, groups);
 
     XkbSelectEvents(dpy, XkbUseCoreKbd, XkbAllEventsMask, XkbAllEventsMask);
     for(;;) {
-        get_active_gr(dpy, &active_group);
-        if(active_group != old) {
-            puts(groups[active_group]);
+        get_active_gr(dpy, &active);
+        if(active != old) {
+            puts(groups[active]);
 	    fflush(stdout);
-            old=active_group;
+            old = active;
         }
 	if(argc > 1)
 	    break;
