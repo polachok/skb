@@ -7,12 +7,7 @@
 #include <string.h>
 #include <X11/Xlib.h>
 #include <X11/XKBlib.h>
-#include <X11/Xatom.h>
-
-#define XKB_CTRLS_MASK (XkbAllControlsMask & ~(XkbInternalModsMask | XkbIgnoreLockModsMask))
-
-#define MAXGROUPLENGTH 256
-#define OUTPUT_LENGTH 3
+#include "skb.h"
 
 void
 eprint(const char *errstr, ...)
@@ -26,49 +21,9 @@ eprint(const char *errstr, ...)
 }
 
 int
-get_gr_num(Display *dpy, XkbDescPtr kb) {
-    int rv;
-
-    if (XkbGetControls(dpy, XKB_CTRLS_MASK, kb) != Success)
-	eprint("skb: XkbGetControls() failed.\n");
-    rv = kb->ctrls->num_groups;
-    XkbFreeControls(kb, XKB_CTRLS_MASK, 0);
-    return rv;
-}
-
-void
-get_gr_names(Display *dpy, XkbDescPtr kb, int ngroups, char **groups) {
-    char *name = NULL;
-    int i;
-
-    if (XkbGetNames(dpy, XkbGroupNamesMask, kb) != Success)
-        eprint("skb: XkbGetNames() failed");
-  
-    for (i = 0; i < ngroups; i++) {
-        if (kb->names->groups[i]) {
-            if ((name = XGetAtomName(dpy, kb->names->groups[i])))
-		snprintf(groups[i], OUTPUT_LENGTH+1, name);
-            else
-		eprint("skb: XGetAtomName() failed\n");
-        }
-    }
-    XkbFreeNames(kb, XkbGroupNamesMask, 0);
-}
-
-int
-get_active_gr(Display *dpy) {
-    XkbStateRec state;
-
-    if (XkbGetState(dpy, XkbUseCoreKbd, &state) != Success)
-	eprint("skb: XkbGetState() failed\n");
-    return state.group;        
-}
-
-int
 main(int argc, char *argv[]){
     Display *dpy;
     XkbDescPtr kb;
-    XkbEvent ev;
     int ngroups = 0;
     char **groups;
     int active = 0;
@@ -88,8 +43,7 @@ main(int argc, char *argv[]){
 	    groups[i] = malloc(MAXGROUPLENGTH); 
     
     get_gr_names(dpy, kb, ngroups, groups);
-
-    XkbSelectEvents(dpy, XkbUseCoreKbd, XkbAllEventsMask, XkbAllEventsMask);
+    enable_gr_events(dpy);
     for(;;) {
         active = get_active_gr(dpy);
         if(active != old) {
@@ -99,7 +53,7 @@ main(int argc, char *argv[]){
         }
 	if(argc > 1)
 	    break;
-	XNextEvent(dpy,&ev.core);
+	wait_gr_event(dpy);
     };
     return 0;
 }

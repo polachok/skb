@@ -3,7 +3,7 @@
 
 include config.mk
 
-SRC = skb.c
+SRC = skb.c xkb.c
 OBJ = ${SRC:.c=.o}
 
 all: options skb
