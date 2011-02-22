@@ -2,6 +2,7 @@
  * See LICENSE file for license details.
  */
 #include <stdlib.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #include <X11/Xlib.h>
@@ -10,18 +11,26 @@
 
 #define XKB_CTRLS_MASK (XkbAllControlsMask & ~(XkbInternalModsMask | XkbIgnoreLockModsMask))
 
+void
+eprint(const char *errstr, ...)
+{
+	va_list ap;
+
+	va_start(ap, errstr);
+	vfprintf(stderr, errstr, ap);
+	va_end(ap);
+	exit(EXIT_FAILURE);
+}
+
 static int
-get_gr_num(Display *dpy, XkbDescPtr kb,
-                               int *num_groups) {
-    if (XkbGetControls(dpy, XKB_CTRLS_MASK, kb) == Success) {
-        *num_groups = kb->ctrls->num_groups;
-        XkbFreeControls(kb, XKB_CTRLS_MASK, 0);
-        return 0;
-    }
-    else {
-        fprintf(stderr,"XkbGetControls()");
-        return 1;
-    }
+get_gr_num(Display *dpy, XkbDescPtr kb) {
+    int rv;
+
+    if (XkbGetControls(dpy, XKB_CTRLS_MASK, kb) != Success)
+	eprint("XkbGetControls() failed.\n");
+    rv = kb->ctrls->num_groups;
+    XkbFreeControls(kb, XKB_CTRLS_MASK, 0);
+    return rv;
 }
 
 static int
@@ -39,7 +48,7 @@ get_gr_names(Display *dpy, XkbDescPtr kb,
     for (i = 0; i < num_groups; i++) {
         if (kb->names->groups[i]) {
             if ((name = XGetAtomName(dpy, kb->names->groups[i]))) {
-                strncpy(groups+strlen(groups)), name, 3);
+                strncpy(groups+strlen(groups), name, 3);
 		groups[strlen(groups)]=':';
             }
             else {
@@ -74,23 +83,24 @@ main(int argc, char *argv[]){
     Display *dpy;
     XkbDescPtr kb;
     XkbEvent ev;
-    int num_groups=0;
-    char groups[256]="\0";
-    char active[256]="\0";
-    int active_group=0;
+    int num_groups = 0;
+    char groups[256], active[256];
+    int active_group = 0;
     int old = -1;
-    int i=0,j=0,k=0;
+    int i, j, k;
 
+    i = j = k = 0;
+    *groups = *active = '\0';
     if(!(dpy = XOpenDisplay(0)))
-	fprintf(stderr,"skb: cannot open display\n");
-    if (!(kb = XkbAllocKeyboard()))
-	fprintf(stderr,"XkbAllocKeyboard()");
+	eprint("skb: cannot open display\n");
 
-    if (get_gr_num(dpy, kb, &num_groups))
-	fprintf(stderr, "skb: cannot get groups number\n");
+    if (!(kb = XkbAllocKeyboard()))
+	eprint("XkbAllocKeyboard()\n");
+
+    num_groups = get_gr_num(dpy, kb);
     
     if (get_gr_names(dpy, kb, num_groups, groups))
-        fprintf(stderr, "skb: cannot get groups names\n");
+        eprint("skb: cannot get groups names\n");
 
     XkbSelectEvents(dpy, XkbUseCoreKbd, XkbAllEventsMask, XkbAllEventsMask);
     for(;;) {
