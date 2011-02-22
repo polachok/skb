@@ -1,0 +1,12 @@
+# how to use
+for use in wmii (output once)
+ skb -1
+for other use (daemon)
+ skb
+
+# licensing
+The code (as far as I remember) is derived from gkrellm-xkb applet by
+Tomas Styblo (see http://tripie.sweb.cz/gkrellm/xkb/)
+
+# me
+Alexander Polakov <polachok@gmail.com>
