@@ -11,6 +11,9 @@
 
 #define XKB_CTRLS_MASK (XkbAllControlsMask & ~(XkbInternalModsMask | XkbIgnoreLockModsMask))
 
+#define MAXGROUPLENGTH 256
+#define OUTPUT_LENGTH 3
+
 void
 eprint(const char *errstr, ...)
 {
@@ -44,7 +47,7 @@ get_gr_names(Display *dpy, XkbDescPtr kb, int num_groups, char **groups) {
     for (i = 0; i < num_groups; i++) {
         if (kb->names->groups[i]) {
             if ((name = XGetAtomName(dpy, kb->names->groups[i])))
-		snprintf(groups[i], 4, name);
+		snprintf(groups[i], OUTPUT_LENGTH+1, name);
             else
 		eprint("XGetAtomName() failed\n");
         }
@@ -82,7 +85,7 @@ main(int argc, char *argv[]){
 
     groups = malloc(sizeof(char*)*num_groups);
     for (i = 0; i < num_groups; i++)
-	    groups[i] = malloc(256); 
+	    groups[i] = malloc(MAXGROUPLENGTH); 
     
     get_gr_names(dpy, kb, num_groups, groups);
 
@@ -98,6 +101,5 @@ main(int argc, char *argv[]){
 	    break;
 	XNextEvent(dpy,&ev.core);
     };
-    //printf("num of gr: %d, active_group: %d, groups: %s act: %s\n", num_groups, active_group, groups, active);
     return 0;
 }
