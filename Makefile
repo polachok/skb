@@ -3,10 +3,12 @@
 
 include config.mk
 
-SRC = skb.c xkb.c
-OBJ = ${SRC:.c=.o}
+SKBSRC = skb.c xkb.c
+XSKBSRC = xskb.c xkb.c
+SKBOBJ = ${SKBSRC:.c=.o}
+XSKBOBJ = ${XSKBSRC:.c=.o}
 
-all: options skb
+all: options skb xskb
 
 options:
 	@echo skb build options:
@@ -19,14 +21,19 @@ options:
 	@echo CC $<
 	@${CC} -c ${CFLAGS} $<
 
-skb: ${OBJ}
+skb: ${SKBOBJ}
 	@echo LD $@
-	@${LD} -o $@ ${OBJ} ${LDFLAGS}
+	@${LD} -o $@ ${SKBOBJ} ${LDFLAGS}
+	@strip $@
+
+xskb: ${XSKBOBJ}
+	@echo LD $@
+	@${LD} -o $@ ${XSKBOBJ} ${LDFLAGS}
 	@strip $@
 
 clean: 
 	@echo cleaning
-	@rm -f skb ${OBJ}
+	@rm -f skb ${SKBOBJ} ${XSKBOBJ}
 
 dist: clean
 	@echo creating dist tarball
