@@ -36,6 +36,7 @@ run(Display *dpy, char **groups, XColor *colors) {
     int old = -1;
     int th, ty, tw;
     GC gc;
+    XEvent ev;
 
     th = font->ascent + font->descent;
     ty = (height / 2) - (th / 2) + font->ascent;
@@ -43,13 +44,16 @@ run(Display *dpy, char **groups, XColor *colors) {
     XSetFont(dpy, gc, font->fid);
     for(;;) {
         active = get_active_gr(dpy);
-	if(active != old) {
-	    XSetForeground(dpy, gc, colors[active].pixel);
-	    XFillRectangle(dpy, win, gc, 0, 0, width, height);
-	    XSetForeground(dpy, gc, BlackPixel(dpy, screen));
-	    tw = XTextWidth(font, groups[active], strlen(groups[active]));
-	    XDrawString(dpy, win, gc, width/2 - tw/2, ty, groups[active], strlen(groups[active]));
-	    old = active;
+	while(XPending(dpy)) {
+		XNextEvent(dpy, &ev);
+		if(active != old || ev.type & Expose|VisibilityNotify) {
+			XSetForeground(dpy, gc, colors[active].pixel);
+			XFillRectangle(dpy, win, gc, 0, 0, width, height);
+			XSetForeground(dpy, gc, BlackPixel(dpy, screen));
+			tw = XTextWidth(font, groups[active], strlen(groups[active]));
+			XDrawString(dpy, win, gc, width/2 - tw/2, ty, groups[active], strlen(groups[active]));
+			old = active;
+		}
 	}
 	wait_gr_event(dpy);
     };
@@ -129,11 +133,12 @@ main(int argc, char *argv[]){
     cmap = DefaultColormap(dpy, screen);
     xwa.override_redirect = 1;
     xwa.background_pixel = BlackPixel(dpy, screen);
+    xwa.event_mask = VisibilityChangeMask | ExposureMask;
     win = XCreateWindow(dpy, DefaultRootWindow(dpy),
 	    x, y, width, height, 0, CopyFromParent,
 	    InputOutput,
 	    DefaultVisual(dpy, screen),
-	    CWBackPixel|CWOverrideRedirect, &xwa);
+	    CWBackPixel|CWOverrideRedirect|CWEventMask, &xwa);
     XMapWindow(dpy, win);
 
     ngroups = get_gr_num(dpy, kb);
