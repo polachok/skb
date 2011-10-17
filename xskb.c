@@ -52,7 +52,8 @@ run(Display *dpy, char **groups, XColor *colors) {
 			XFillRectangle(dpy, win, gc, 0, 0, width, height);
 			XSetForeground(dpy, gc, BlackPixel(dpy, screen));
 			tw = XTextWidth(font, groups[active], strlen(groups[active]));
-			XDrawString(dpy, win, gc, width/2 - tw/2, ty, groups[active], strlen(groups[active]));
+			if (th <= height)
+				XDrawString(dpy, win, gc, width/2 - tw/2, ty, groups[active], strlen(groups[active]));
 			old = active;
 		}
 	}
