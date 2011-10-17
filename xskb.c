@@ -18,6 +18,7 @@ int width = 30;
 int height = 12;
 int x;
 int y;
+int root;
 
 void
 eprint(const char *errstr, ...)
@@ -40,7 +41,7 @@ run(Display *dpy, char **groups, XColor *colors) {
 
     th = font->ascent + font->descent;
     ty = (height / 2) - (th / 2) + font->ascent;
-    gc = XCreateGC(dpy, DefaultRootWindow(dpy), 0, 0);
+    gc = XCreateGC(dpy, root, 0, 0);
     XSetFont(dpy, gc, font->fid);
     for(;;) {
         active = get_active_gr(dpy);
@@ -88,7 +89,7 @@ main(int argc, char *argv[]){
     int ch, i;
 
     /* parse command line */
-    while ((ch = getopt(argc, argv, "x:y:w:h:")) != -1) {
+    while ((ch = getopt(argc, argv, "x:y:w:h:r:")) != -1) {
 	switch (ch) {
 	    case 'x':
 		x = atoi(optarg);
@@ -104,6 +105,10 @@ main(int argc, char *argv[]){
 
 	    case 'h':
 		height = atoi(optarg);
+		break;
+
+	    case 'r':
+		root = strtol(optarg, NULL, 16);
 		break;
 
 	    default:
@@ -130,11 +135,13 @@ main(int argc, char *argv[]){
     if(!(font = XLoadQueryFont(dpy, fontstr)))
 	eprint("skb: XLoadQueryFont failed for %s\n", fontstr);
     screen = DefaultScreen(dpy);
+    if(!root)
+	    root = DefaultRootWindow(dpy);
     cmap = DefaultColormap(dpy, screen);
     xwa.override_redirect = 1;
     xwa.background_pixel = BlackPixel(dpy, screen);
     xwa.event_mask = VisibilityChangeMask | ExposureMask;
-    win = XCreateWindow(dpy, DefaultRootWindow(dpy),
+    win = XCreateWindow(dpy, root,
 	    x, y, width, height, 0, CopyFromParent,
 	    InputOutput,
 	    DefaultVisual(dpy, screen),
